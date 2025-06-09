@@ -1,30 +1,385 @@
 ---
 title: "HW 02"
-author: "INSERT YOUR NAME HERE"
+author: "Meredith Jean-Baptiste"
+date: 2025-05-30
 format: 
-  html:
+    html:
     embed-resources: true
-toc: true
+    execute: 
+  warning: 
+message: false
+error: false
 ---
+
+```{r}
+#| label: SETUP
+#SETUP for THEMES 
+  if (!require("pacman"))
+    install.packages("pacman")
+pacman::p_load(here)
+pacman::p_load(tidyverse, colorspace, palmerpenguins, fs, lubridate, scales, openintro, gghighlight, glue, ggridges, dplyr, tidyr)
+
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+
+options(width = 65)
+
+knitr::opts_chunk$set(
+  fig.width = 7,        # 7" width
+  fig.asp = 0.618,      # the golden ratio
+  fig.retina = 3,       # dpi multiplier for displaying HTML output on retina
+  fig.align = "center", # center align figures
+  dpi = 300             # higher dpi, sharper image
+)
+
+```  
+
 
 ## 1 - A new day, a new plot, a new geom
 
 ```{r}
-#| label: label-me-1
+#| label: Question 1: ggridges
+devtools::install_github("tidyverse/dsbox")
+library(dsbox)
+my_edibnb_data <- edibnb
+
 
 ```
 
 ## 2 - Foreign Connected PACs
 
 ```{r}
-#| label: label-me-2
+#| label: Question 2 Foreign PACs
+#| 
+# get a list of files with "Foreign Connected PAC" in their names
+list_of_files <- dir_ls(path = "data", regexp = "Foreign Connected PAC")
+# read all files and row bind them
+# keeping track of the file name in a new column called year
+pac <- read_csv(list_of_files, id = "year")
+
+# clean the names
+pac %>% 
+   janitor::clean_names()
+pac$Dems = as.numeric(gsub("\\$", "", pac$Dems))
+pac$Repubs = as.numeric(gsub("\\$", "", pac$Repubs))
+
+#Datawrangling
+#This.was.hard
+#split Country/Parent column using '/' as the separator
+pac[c('country', 'parent')] <- str_split_fixed(pac$`Country of Origin/Parent Company`, '/', 2)
+#split year column using '.' as the separator
+pac <-  separate(pac, year, into = c("full", "csv"), sep = "[.]", extra = "drop")
+#split full column using '-' as the separator
+pac[c('first', 'year')] <- str_split_fixed(pac$`full`, '-', 2)
+#convert year to numeric(double)
+pac$year <- as.numeric(as.character(pac$year))
+#pac <- arrange(year) %>% 
+#Rename
+pac <- pac %>% rename_at('PAC Name (Affiliate)', ~'pac_name_affilate')
+#dropping a column
+pac <- subset(pac, select = -c(full, csv, Total, `Country of Origin/Parent Company`, first))
+#Rename partys
+pac <- pac %>% rename_at ('Dems', ~'Party_D')
+pac <- pac %>% rename_at ('Repubs', ~'Party_R')
+
+
+# select and order the columns
+pac_wrangle <- pac %>% 
+  select (country, year, Party_D, Party_R,) 
+ 
+#select UK country
+ pac_wrangle %>% 
+   filter(
+    country == "UK")
+
+ #pivot long : NOT working
+ pac_wrangle %>% 
+  pivot_longer(
+    cols = Party_D:Party_R,
+    names_to = "party", 
+    values_to = "amount",
+    values_drop_na = FALSE
+  )
+
+  
+ 
+pac_wrangle %>% 
+  ggplot()+
+  geom_line(aes( x = year,
+                 y = amount,
+                 color = party))
+  
+
+
+
+#view(pac_wrangle)
+#glimpse(pac_wrangle)
+
+
+
+
+#citations for how to remove the dollar sign, how to split columns into two, how to pivot long,
+#caption = "\n\nSource: https://www.statology.org/remove-dollar-sign-in-r/\nhttps://www.statology.org/split-column-in-r/\nhttps://stackoverflow.com/questions/30808474/r-data-wrangling-for-emails\nhttps://www.statology.org/rename-single-column-in-r/\n R for Data Science chapter 5: https://r4ds.hadley.nz/data-tidy.html\n"
+
 
 ```
 
 ## 3 - Median housing prices in the US
+```{r}
+#| label: Question 3 Median housing prices
+#SETUP for THEMES 
+  if (!require("pacman"))
+    install.packages("pacman")
+pacman::p_load(here)
+pacman::p_load(tidyverse, colorspace, palmerpenguins, fs, lubridate, scales, openintro, gghighlight, glue, ggridges, dplyr)
+
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+
+options(width = 65)
+
+knitr::opts_chunk$set(
+  fig.width = 7,        # 7" width
+  fig.asp = 0.618,      # the golden ratio
+  fig.retina = 3,       # dpi multiplier for displaying HTML output on retina
+  fig.align = "center", # center align figures
+  dpi = 300             # higher dpi, sharper image
+)
+
+# load the dataset 
+housing<-read_csv(here("data", "median-housing.csv"))
+
+#adjust the date
+housing %>% 
+  mutate(date = mdy(DATE))
+#Rename price
+housing <- housing %>% rename_at ('MSPUS', ~'price')
+housing <- housing %>% rename_at ('DATE', ~'date')
+
+#split date column using '-' as the separator
+housing [c('year', 'month')] <- str_split_fixed(housing$`date`, '-', 2)
+
+#dropping a column - no need to drop month and date
+#housing <- subset(housing, select = -c(month, date))
+#convert year to dbl
+housing$year <- as.numeric(as.character(housing$year)) 
+
+# Define x-axis break interval as 10 years (did not work)
+#year_min <- min(housing$year, na.rm = TRUE)
+#year_max <- max(housing$year, na.rm = TRUE)
+
+#If I put the x=date, the line is correct but the labels are all piled up/ OR the error message "Can't convert `x` <date> to <double>.".
+#If I put x= year, the line is choppy but the labels are correct
+housing %>% 
+  ggplot(aes(
+    x = date,
+    y = price,
+  )) +
+   geom_line(color = "blue")+ 
+  #scale_x_continuous(labels =  +
+  scale_x_continuous(breaks = seq(from = 1965, to = 2020, by = 5)) +
+  #scale_x_discrete(labels = c("1965", "1970", "1975", "1980", "1985", "1990", "1995", "2000", "2005", "2010", "2015", "2020"))+
+  scale_y_continuous(breaks = seq(from = 0, to = 440000, by = 40000))+
+  #tried to add comma's in the y-axis numbers (unsuccessful) using the labels=comma:
+  #labels = comma(big.mark = ","))+
+  labs(
+    x = "",
+    y = "Dollars",
+    title = "Median sales price of houses sold in the United States", 
+    subtitle = "Not seasonally adjusted",
+#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify,
+caption = "\n\nSource: https://www.statology.org/remove-dollar-sign-in-r/\nhttps://www.statology.org/split-column-in-r/\nhttps://stackoverflow.com/questions/30808474/r-data-wrangling-for-emails\nhttps://www.statology.org/rename-single-column-in-r/\n R for Data Science chapter 5: https://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/"
+  )+
+    theme(plot.title = element_text(hjust = -1),
+          plot.subtitle = element_text(hjust = -0.15))+
+#scale_x_date(date_labels = year)+
+
+# Hide the lyear# Hide the legend
+      theme(legend.position = "none")  
+
+ 
+#glimpse(housing)
+#view(housing)
+``` 
+
+## 3b - Median housing prices in the US: RECESSION LINES
+```{r}
+#| label: Question 3 Median housing prices with recession lines
+#SETUP for THEMES 
+  if (!require("pacman"))
+    install.packages("pacman")
+pacman::p_load(here)
+pacman::p_load(tidyverse, colorspace, palmerpenguins, fs, lubridate, scales, openintro, gghighlight, glue, ggridges, dplyr)
+
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+
+options(width = 65)
+
+knitr::opts_chunk$set(
+  fig.width = 7,        # 7" width
+  fig.asp = 0.618,      # the golden ratio
+  fig.retina = 3,       # dpi multiplier for displaying HTML output on retina
+  fig.align = "center", # center align figures
+  dpi = 300             # higher dpi, sharper image
+)
+
+# load the dataset 
+housing<-read_csv(here("data", "median-housing.csv"))
+
+#adjust the date
+housing %>% 
+  mutate(date = mdy(DATE))
+#Rename price
+housing <- housing %>% rename_at ('MSPUS', ~'price')
+housing <- housing %>% rename_at ('DATE', ~'date')
+
+#split date column using '-' as the separator
+housing [c('year', 'month')] <- str_split_fixed(housing$`date`, '-', 2)
+
+#dropping a column - no need to drop month and date
+#housing <- subset(housing, select = -c(month, date))
+#convert year to dbl
+housing$year <- as.numeric(as.character(housing$year)) 
+
+#housing %>% 
+#  mutate(recession = if_else(price>, "TRUE", "FALSE"))
+
+
+# Define x-axis break interval as 10 years (did not work)
+#year_min <- min(housing$date, na.rm = TRUE)
+#year_max <- max(housing$date, na.rm = TRUE)
+
+#If I put the x=date, the line is correct but the labels are all piled up.
+#If I put x= year, the line is choppy but the labels are correct
+housing %>% 
+  ggplot(aes(
+    x = date,
+    y = price,
+  )) +
+   geom_line(color = "blue")+ 
+  #scale_x_continuous(labels =  +
+  scale_x_continuous(breaks = seq(from = 1960, to = 2020, by = 5)) +
+  scale_y_continuous(breaks = seq(from = 0, to = 440000, by = 40000))+
+  labs(
+    x = "",
+    y = "Dollars",
+    title = "Median sales price of houses sold in the United States", 
+    subtitle = "Not seasonally adjusted",
+#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify.
+caption = "\n\nhttps://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/\nhttps://stackoverflow.com/questions/78249312/adding-recession-bands-to-ggplot-of-federal-interest-rate-the-taylor-rule-and-y \nhttps://sergiocorreia.github.io/fedplot/reference/geom_recessions.html\nhttps://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/"
+  )+
+   theme(plot.title = element_text(hjust = 1.3),
+          plot.subtitle = element_text(hjust = -0.3))+
+  #geom_recessions(
+  #fill = "#BDCFDE",
+  #alpha = 1,
+  #draw_top_bar = TRUE,
+  #top_fill = "#bdcfde",
+  #top_alpha = 1,
+  #method = c("peak","midpoint", "trough" ))+
+#scale_x_date(date_labels = year)+
+
+# Hide the lyear# Hide the legend
+      theme(legend.position = "none")
+
+```
+
+##3C - Subset of Median Housing 2019 - 2020
+
+```{r}
+#| label: Question 3C Median housing prices 2019-2020
+#SETUP for THEMES 
+  if (!require("pacman"))
+    install.packages("pacman")
+pacman::p_load(here)
+pacman::p_load(tidyverse, colorspace, palmerpenguins, fs, lubridate, scales, openintro, gghighlight, glue, ggridges, dplyr)
+
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+
+options(width = 65)
+
+knitr::opts_chunk$set(
+  fig.width = 7,        # 7" width
+  fig.asp = 0.618,      # the golden ratio
+  fig.retina = 3,       # dpi multiplier for displaying HTML output on retina
+  fig.align = "center", # center align figures
+  dpi = 300             # higher dpi, sharper image
+)
+
+# load the dataset 
+housing<-read_csv(here("data", "median-housing.csv"))
+
+#adjust the date
+housing %>% 
+  mutate(date = mdy(DATE))
+#Rename price
+housing <- housing %>% rename_at ('MSPUS', ~'price')
+housing <- housing %>% rename_at ('DATE', ~'date')
+
+#split date column using '-' as the separator
+housing [c('year', 'month')] <- str_split_fixed(housing$`date`, '-', 2)
+
+#dropping a column - no need to drop month and date
+#housing <- subset(housing, select = -c(month, date))
+#convert year to dbl
+housing$year <- as.numeric(as.character(housing$year)) 
+
+#housing %>% 
+#  mutate(recession = if_else(price>, "TRUE", "FALSE"))
+
+
+# Define x-axis break interval as 10 years (did not work)
+#year_min <- min(housing$date, na.rm = TRUE)
+#year_max <- max(housing$date, na.rm = TRUE)
+
+#If I put the x=date, the line is correct but the labels are all piled up.
+#If I put x= year, the line is choppy but the labels are correct
+housing |> 
+  filter(date > ymd(20181231), date < ymd(20210101)) %>% 
+  ggplot(aes(
+    x = date,
+    y = price,
+  )) +
+  geom_line(color = "blue")+ 
+  geom_point(color = "white")+
+  #scale_x_discrete()
+  scale_y_continuous(breaks = seq(from = 300000, to = 340000, by = 20000))+
+  labs(
+    x = "2019                                2020",
+    y = "Dollars",
+    title = "Median sales price of houses sold in the United States", 
+    subtitle = "Not seasonally adjusted",
+#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify.
+caption = "\n\nhttps://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/\nhttps://stackoverflow.com/questions/78249312/adding-recession-bands-to-ggplot-of-federal-interest-rate-the-taylor-rule-and-y \nhttps://sergiocorreia.github.io/fedplot/reference/geom_recessions.html\nhttps://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/"
+  )+
+   theme(plot.title = element_text(hjust = 1.3),
+          plot.subtitle = element_text(hjust = -0.3))+
+ 
+
+# Hide the lyear# Hide the legend
+      theme(legend.position = "none")
+
+
+
+
+
+```
+
+
+
+
+
+
 
 
 ## 4 - Expect More. Plot More.
 
+```{r}
+
+
+```
+
 
 ## 5 - Mirror, mirror on the wall, who’s the ugliest of them all?
+```{r}
+
+
+```
