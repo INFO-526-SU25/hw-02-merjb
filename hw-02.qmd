@@ -168,25 +168,26 @@ housing$year <- as.numeric(as.character(housing$year))
 
 #If I put the x=date, the line is correct but the labels are all piled up/ OR the error message "Can't convert `x` <date> to <double>.".
 #If I put x= year, the line is choppy but the labels are correct
+#Finally resolved this issue using scale_x_date with breaks
 housing %>% 
   ggplot(aes(
     x = date,
     y = price,
   )) +
    geom_line(color = "blue")+ 
-  #scale_x_continuous(labels =  +
-  scale_x_continuous(breaks = seq(from = 1965, to = 2020, by = 5)) +
+  scale_x_date(date_breaks = "5 years", date_labels =  "%Y")+ 
+  #scale_x_continuous(breaks = seq(from = 1965, to = 2020, by = 5)) +
   #scale_x_discrete(labels = c("1965", "1970", "1975", "1980", "1985", "1990", "1995", "2000", "2005", "2010", "2015", "2020"))+
-  scale_y_continuous(breaks = seq(from = 0, to = 440000, by = 40000))+
-  #tried to add comma's in the y-axis numbers (unsuccessful) using the labels=comma:
-  #labels = comma(big.mark = ","))+
+  #tried to add comma's in the y-axis numbers (unsuccessful at first!) using the labels=comma:
+  scale_y_continuous(breaks = seq(from = 0, to = 440000, by = 40000),
+                     labels = comma_format(big.mark = ","))+
   labs(
     x = "",
     y = "Dollars",
     title = "Median sales price of houses sold in the United States", 
     subtitle = "Not seasonally adjusted",
-#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify,
-caption = "\n\nSource: https://www.statology.org/remove-dollar-sign-in-r/\nhttps://www.statology.org/split-column-in-r/\nhttps://stackoverflow.com/questions/30808474/r-data-wrangling-for-emails\nhttps://www.statology.org/rename-single-column-in-r/\n R for Data Science chapter 5: https://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/"
+#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify,formatting numbers, correcting the x-axis labels (thank you to my colleague @Wes Scott)
+caption = "\n\nSource: https://www.statology.org/remove-dollar-sign-in-r/\nhttps://www.statology.org/split-column-in-r/\nhttps://stackoverflow.com/questions/30808474/r-data-wrangling-for-emails\nhttps://www.statology.org/rename-single-column-in-r/\n R for Data Science chapter 5: https://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/\nhttps://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
   )+
     theme(plot.title = element_text(hjust = -1),
           plot.subtitle = element_text(hjust = -0.15))+
@@ -255,19 +256,19 @@ housing %>%
     y = price,
   )) +
    geom_line(color = "blue")+ 
-  #scale_x_continuous(labels =  +
-  scale_x_continuous(breaks = seq(from = 1960, to = 2020, by = 5)) +
-  scale_y_continuous(breaks = seq(from = 0, to = 440000, by = 40000))+
+  scale_x_date(date_breaks = "5 years", date_labels =  "%Y")+ 
+  scale_y_continuous(breaks = seq(from = 0, to = 440000, by = 40000),
+                     labels = comma_format(big.mark = ","))+
   labs(
     x = "",
     y = "Dollars",
     title = "Median sales price of houses sold in the United States", 
     subtitle = "Not seasonally adjusted",
-#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify.
-caption = "\n\nhttps://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/\nhttps://stackoverflow.com/questions/78249312/adding-recession-bands-to-ggplot-of-federal-interest-rate-the-taylor-rule-and-y \nhttps://sergiocorreia.github.io/fedplot/reference/geom_recessions.html\nhttps://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/"
+#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify and scale_x_date, also my colleague @Wes Scott, formatting numbers.
+caption = "\n\nhttps://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/\nhttps://stackoverflow.com/questions/78249312/adding-recession-bands-to-ggplot-of-federal-interest-rate-the-taylor-rule-and-y \nhttps://sergiocorreia.github.io/fedplot/reference/geom_recessions.html\nhttps://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/\nhttps://stackoverflow.com/questions/11748384/formatting-dates-on-x-axis-in-ggplot2\nhttps://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
   )+
-   theme(plot.title = element_text(hjust = 1.3),
-          plot.subtitle = element_text(hjust = -0.3))+
+   theme(plot.title = element_text(hjust = -1.2),
+          plot.subtitle = element_text(hjust = -0.2))+
   #geom_recessions(
   #fill = "#BDCFDE",
   #alpha = 1,
@@ -322,16 +323,6 @@ housing [c('year', 'month')] <- str_split_fixed(housing$`date`, '-', 2)
 #convert year to dbl
 housing$year <- as.numeric(as.character(housing$year)) 
 
-#housing %>% 
-#  mutate(recession = if_else(price>, "TRUE", "FALSE"))
-
-
-# Define x-axis break interval as 10 years (did not work)
-#year_min <- min(housing$date, na.rm = TRUE)
-#year_max <- max(housing$date, na.rm = TRUE)
-
-#If I put the x=date, the line is correct but the labels are all piled up.
-#If I put x= year, the line is choppy but the labels are correct
 housing |> 
   filter(date > ymd(20181231), date < ymd(20210101)) %>% 
   ggplot(aes(
@@ -339,36 +330,27 @@ housing |>
     y = price,
   )) +
   geom_line(color = "blue")+ 
-  geom_point(color = "white")+
-  #scale_x_discrete()
-  scale_y_continuous(breaks = seq(from = 300000, to = 340000, by = 20000))+
+  geom_point(color = "blue",
+             fill = "white",
+             shape = 1 )+
+ #unable to add in the quarter labels using scale_x_discrete
+  #scale_x_discrete(labels("Q1", "Q2", "Q3", "Q4", "Q1", "Q2", "Q3", "Q4")+
+  scale_y_continuous(breaks = seq(from = 280000, to = 380000, by = 20000),
+                     labels = comma_format(big.mark = ","))+
   labs(
     x = "2019                                2020",
     y = "Dollars",
     title = "Median sales price of houses sold in the United States", 
     subtitle = "Not seasonally adjusted",
-#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify.
-caption = "\n\nhttps://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/\nhttps://stackoverflow.com/questions/78249312/adding-recession-bands-to-ggplot-of-federal-interest-rate-the-taylor-rule-and-y \nhttps://sergiocorreia.github.io/fedplot/reference/geom_recessions.html\nhttps://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/"
+#citations for label left justify, open circle shape, formatting numbers.
+caption = "\n\nhttps://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/\nhttps://stackoverflow.com/questions/78249312/adding-recession-bands-to-ggplot-of-federal-interest-rate-the-taylor-rule-and-y \nhttps://sergiocorreia.github.io/fedplot/reference/geom_recessions.html\nhttps://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/\nhttps://rstudio.github.io/cheatsheets/html/data-visualization.html\nhttps://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
   )+
-   theme(plot.title = element_text(hjust = 1.3),
-          plot.subtitle = element_text(hjust = -0.3))+
- 
-
+   theme(plot.title = element_text(hjust = -0.60),
+          plot.subtitle = element_text(hjust = -0.10))+
 # Hide the lyear# Hide the legend
       theme(legend.position = "none")
 
-
-
-
-
 ```
-
-
-
-
-
-
-
 
 ## 4 - Expect More. Plot More.
 
