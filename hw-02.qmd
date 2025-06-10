@@ -85,11 +85,13 @@ pac <- pac %>% rename_at ('Repubs', ~'Party_R')
 # select and order the columns
 pac_wrangle <- pac %>% 
   select (country, year, Party_D, Party_R,) 
+
  
 #select UK country
  pac_wrangle %>% 
    filter(
     country == "UK")
+ #view(pac_wrangle)
 
  #pivot long : NOT working
  pac_wrangle %>% 
@@ -187,7 +189,7 @@ housing %>%
     title = "Median sales price of houses sold in the United States", 
     subtitle = "Not seasonally adjusted",
 #citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify,formatting numbers, correcting the x-axis labels (thank you to my colleague @Wes Scott)
-caption = "\n\nSource: https://www.statology.org/remove-dollar-sign-in-r/\nhttps://www.statology.org/split-column-in-r/\nhttps://stackoverflow.com/questions/30808474/r-data-wrangling-for-emails\nhttps://www.statology.org/rename-single-column-in-r/\n R for Data Science chapter 5: https://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/\nhttps://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
+caption = "Sources: Census;HUD\n\nCitations: https://www.statology.org/remove-dollar-sign-in-r/\nhttps://www.statology.org/split-column-in-r/\nhttps://stackoverflow.com/questions/30808474/r-data-wrangling-for-emails\nhttps://www.statology.org/rename-single-column-in-r/\n R for Data Science chapter 5: https://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/\nhttps://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
   )+
     theme(plot.title = element_text(hjust = -1),
           plot.subtitle = element_text(hjust = -0.15))+
@@ -265,7 +267,7 @@ housing %>%
     title = "Median sales price of houses sold in the United States", 
     subtitle = "Not seasonally adjusted",
 #citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify and scale_x_date, also my colleague @Wes Scott, formatting numbers.
-caption = "\n\nhttps://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/\nhttps://stackoverflow.com/questions/78249312/adding-recession-bands-to-ggplot-of-federal-interest-rate-the-taylor-rule-and-y \nhttps://sergiocorreia.github.io/fedplot/reference/geom_recessions.html\nhttps://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/\nhttps://stackoverflow.com/questions/11748384/formatting-dates-on-x-axis-in-ggplot2\nhttps://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
+caption = "Shaded areas indicate U.S. recessions \nSources: Census; HUD\n \nhttps://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/\nhttps://stackoverflow.com/questions/78249312/adding-recession-bands-to-ggplot-of-federal-interest-rate-the-taylor-rule-and-y \nhttps://sergiocorreia.github.io/fedplot/reference/geom_recessions.html\nhttps://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/\nhttps://stackoverflow.com/questions/11748384/formatting-dates-on-x-axis-in-ggplot2\nhttps://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
   )+
    theme(plot.title = element_text(hjust = -1.2),
           plot.subtitle = element_text(hjust = -0.2))+
@@ -355,6 +357,7 @@ caption = "\n\nhttps://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession
 ## 4 - Expect More. Plot More.
 
 ```{r}
+#| label: Target->Bullseye
 #SETUP for THEMES 
   if (!require("pacman"))
     install.packages("pacman")
@@ -379,24 +382,59 @@ df = data.frame(subject <- c('A','B','C'),
 
 ggplot(df, aes(x = subject, y = value, fill = subject....c..A....B....C..)) +
   scale_fill_manual(values = c("red","white","red")) +
-  geom_col() +scale_x_discrete(limits = c(" ", "A","B","C")) +coord_polar("y")+
+  geom_col() +scale_x_discrete(limits = c("A","B","C")) +coord_polar("y")+
   #removed labels and background
   theme_void()+
   labs(
     x = "",
     y = "",
-    title = "TARGET",
     #citation for how to draw layered donut charts
-    caption = "https://www.geeksforgeeks.org/create-multiple-pie-charts-using-ggplot2-in-r/"
+    caption = "TARGET\n\nhttps://www.geeksf,orgeeks.org/create-multiple-pie-charts-using-ggplot2-in-r/"
   )+
-  theme(legend.position = "none")
-
+  theme(legend.position = "none")+
+    theme(plot.caption = element_text(color = "red", size = 18, face = "bold", hjust = 0))
 
 ```
 
 
 ## 5 - Mirror, mirror on the wall, who’s the ugliest of them all?
 ```{r}
+#| label: Ugly penguin graph  (:>)
+#SETUP for THEMES 
+  if (!require("pacman"))
+    install.packages("pacman")
+pacman::p_load(here)
+pacman::p_load(tidyverse, colorspace, palmerpenguins, fs, lubridate, scales, openintro, gghighlight, glue, ggridges, dplyr)
+
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+
+options(width = 65)
+
+knitr::opts_chunk$set(
+  fig.width = 7,        # 7" width
+  fig.asp = 0.618,      # the golden ratio
+  fig.retina = 3,       # dpi multiplier for displaying HTML output on retina
+  fig.align = "center", # center align figures
+  dpi = 300             # higher dpi, sharper image
+)
+palmerpenguins::penguins
+#glimpse(penguins)
+#view(penguins)
+penguins%>% 
+  drop_na(body_mass_g) %>% 
+ggplot(aes(x = species, y = body_mass_g, color = island, size = body_mass_g))+
+  geom_point()+
+  geom_point(show.legend = FALSE) +
+  geom_line(linewidth = 1,
+            color = "green") +
+  theme_dark() +
+  scale_color_manual(values = c("purple","red","yellow"))+ 
+labs(
+  title = "UGLIEST OF THEM ALL",
+  subtitle = "Worst plot colors ever"
+)+
+  theme(plot.title = element_text(color = "red", size = 18, face = "bold", hjust = 0),
+        plot.subtitle = element_text(color = "purple", size = 10, face = "italics"))
 
 
 ```
