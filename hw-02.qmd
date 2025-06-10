@@ -355,6 +355,41 @@ caption = "\n\nhttps://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession
 ## 4 - Expect More. Plot More.
 
 ```{r}
+#SETUP for THEMES 
+  if (!require("pacman"))
+    install.packages("pacman")
+pacman::p_load(here)
+pacman::p_load(tidyverse, colorspace, palmerpenguins, fs, lubridate, scales, openintro, gghighlight, glue, ggridges, dplyr)
+
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+
+options(width = 65)
+
+knitr::opts_chunk$set(
+  fig.width = 7,        # 7" width
+  fig.asp = 0.618,      # the golden ratio
+  fig.retina = 3,       # dpi multiplier for displaying HTML output on retina
+  fig.align = "center", # center align figures
+  dpi = 300             # higher dpi, sharper image
+)
+
+library(ggplot2)
+df = data.frame(subject <- c('A','B','C'),
+                value <- c(100,100,100))
+
+ggplot(df, aes(x = subject, y = value, fill = subject....c..A....B....C..)) +
+  scale_fill_manual(values = c("red","white","red")) +
+  geom_col() +scale_x_discrete(limits = c(" ", "A","B","C")) +coord_polar("y")+
+  #removed labels and background
+  theme_void()+
+  labs(
+    x = "",
+    y = "",
+    title = "TARGET",
+    #citation for how to draw layered donut charts
+    caption = "https://www.geeksforgeeks.org/create-multiple-pie-charts-using-ggplot2-in-r/"
+  )+
+  theme(legend.position = "none")
 
 
 ```
