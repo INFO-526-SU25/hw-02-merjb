@@ -5,19 +5,22 @@ date: 2025-05-30
 format: 
     html:
     embed-resources: true
-    execute: 
-  warning: 
+execute: 
+warning: false
 message: false
 error: false
 ---
 
+## 1 - A new day, a new plot, a new geom
+
 ```{r}
-#| label: SETUP
+#| label: Question 1 ggridges
+
 #SETUP for THEMES 
   if (!require("pacman"))
     install.packages("pacman")
 pacman::p_load(here)
-pacman::p_load(tidyverse, colorspace, palmerpenguins, fs, lubridate, scales, openintro, gghighlight, glue, ggridges, dplyr, tidyr)
+pacman::p_load(tidyverse, colorspace, palmerpenguins, fs, lubridate, scales, openintro, gghighlight, glue, ggridges, dplyr, tidyr, forcats)
 
 ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
 
@@ -31,17 +34,30 @@ knitr::opts_chunk$set(
   dpi = 300             # higher dpi, sharper image
 )
 
-```  
-
-
-## 1 - A new day, a new plot, a new geom
-
-```{r}
-#| label: Question 1: ggridges
 devtools::install_github("tidyverse/dsbox")
 library(dsbox)
 my_edibnb_data <- edibnb
 
+#make a ridge plot of AirBnB review scores of Edinburgh neighborhoods, ordered by their median review scores
+#stat_summary() function to summarize your data. To order the data by mean, you can use the fct_reorder() function from the forcats package to reorder the factor levels based on the calculated means.
+#edibnb %>% 
+#  group_by(neighbourhood) %>%
+#  summarize(mean_score = mean(review_scores_rating), .groups = "drop") %>% 
+#  mutate(neighbourhood = fct_reorder(neighbourhood, mean_score)) %>% 
+#  geom_density_ridges(review_scores_rating ~ fct_reorder(neighbourhood, review_scores_rating))+
+edibnb %>% 
+ggplot(aes(x = review_scores_rating, y = neighbourhood))+
+  geom_density_ridges()+
+  labs(
+    x = "Review score ratings",
+    y = "Neighbourhood",
+    title = "AirBNB review score ratings by Edinburgh neighbourhoods",
+    #sources for calculating the means of the scores, how to reorder the means and the geom density plot
+    caption = "Source: TidyTuesday"
+  )
+
+#view(edibnb)
+#glimpse(edibnb)
 
 ```
 
@@ -49,19 +65,37 @@ my_edibnb_data <- edibnb
 
 ```{r}
 #| label: Question 2 Foreign PACs
-#| 
+
+#| label: SETUP
+#SETUP for THEMES 
+  if (!require("pacman"))
+    install.packages("pacman")
+pacman::p_load(here)
+pacman::p_load(tidyverse, colorspace, palmerpenguins, fs, lubridate, scales, openintro, gghighlight, glue, ggridges, dplyr, tidyr)
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+options(width = 65)
+knitr::opts_chunk$set(
+  fig.width = 7,        # 7" width
+  fig.asp = 0.618,      # the golden ratio
+  fig.retina = 3,       # dpi multiplier for displaying HTML output on retina
+  fig.align = "center", # center align figures
+  dpi = 300             # higher dpi, sharper image
+)
+
 # get a list of files with "Foreign Connected PAC" in their names
 list_of_files <- dir_ls(path = "data", regexp = "Foreign Connected PAC")
 # read all files and row bind them
 # keeping track of the file name in a new column called year
 pac <- read_csv(list_of_files, id = "year")
 
-# clean the names
+# clean the names and convert character amounts to numeric
 pac %>% 
    janitor::clean_names()
 pac$Dems = as.numeric(gsub("\\$", "", pac$Dems))
 pac$Repubs = as.numeric(gsub("\\$", "", pac$Repubs))
-glimpse(pac)
+
+# Note: another way to format a date into just the year:
+# pac$year = format(pac$year, "%Y")
 
 #Datawrangling
 #This.was.hard
@@ -82,61 +116,150 @@ pac <- subset(pac, select = -c(full, csv, Total, `Country of Origin/Parent Compa
 pac <- pac %>% rename_at ('Dems', ~'Party_D')
 pac <- pac %>% rename_at ('Repubs', ~'Party_R')
 
-
+pac <- pac %>%  filter(country == "UK")
 # select and order the columns
-pac_wrangle <- pac %>% 
-  select (country, year, Party_D, Party_R,) 
+pac <- pac %>% select(country, year, Party_D, Party_R) 
 
- 
-#select UK country
- pac_wrangle %>% 
-   filter(
-    country == "UK")
- #view(pac_wrangle)
+#add the totals per year (did not work)
+#pac %>% 
+ # tapply(pac$Party_D, pac$year, function = sum)+
+  #tapply(pac$Party_R, pac$year, function = sum)
+#this didnt work either
+#pac <- pac %>% 
+#  group_by(year) %>% 
+#  summarise(Party_D)+
+#  summarise(Party_R)
 
- #pivot long : NOT working
- pac_wrangle %>% 
-  pivot_longer(
-    !country,
-    cols = Party_D:Party_R,
-    cols_vary = "fastest",
-    names_to = "party", 
-     names_prefix = NULL,
-  names_sep = NULL,
-  names_pattern = NULL,
-  names_ptypes = NULL,
-  names_transform = NULL,
-  names_repair = "check_unique",
-    values_to = "amount",
-    values_drop_na = FALSE,
-    values_ptypes = NULL,
-  values_transform = NULL
-  )
+#neither did this
+#summarizing the amount per year
+ #group_by(year) %>% 
+  #summarise(amount = sum(amount))%>% 
 
-  
- 
-pac_wrangle %>% 
-  ggplot()+
-  geom_line(aes( x = year,
-                 y = amount,
-                 color = party))
-  
+#pivot long did not work at first , now it does
+pac <- pac %>% 
+  pivot_longer(cols = starts_with("Party"),
+               names_to = "party",
+               values_to = "amount",
+               values_drop_na = TRUE)
+pac <- pac %>% 
+  group_by(year, party, .drop = TRUE) %>% 
+  summarize(total_contributions = sum(amount))
 
-
-
-#view(pac_wrangle)
-#glimpse(pac_wrangle)
-
-
+pac %>% 
+  ggplot(aes(x = year, y = total_contributions, color = party))+
+  geom_line(show.legend = TRUE)+
+  geom_line(linewidth = 1) +
+  theme_classic() +
+  scale_color_manual(values = c("blue", "red"),
+                     labels = c("Democrat", "Republican"))+
+  scale_y_continuous(breaks = seq(from = 0, to = 3000000, by = 1000000),
+                     labels = comma_format(big.mark = ","))+
+  #scale_y_discrete (label_dollar ("1M", "2M", "3M"))+
+  labs(
+    y = "Total amount",
+    x = "Year",
+    title = "Contributions to US political parties from UK-connected PACs",
+    caption = "OpenSecrets.org")
 
 
-#citations for how to remove the dollar sign, how to split columns into two, how to pivot long,
-#caption = "\n\nSource: https://www.statology.org/remove-dollar-sign-in-r/\nhttps://www.statology.org/split-column-in-r/\nhttps://stackoverflow.com/questions/30808474/r-data-wrangling-for-emails\nhttps://www.statology.org/rename-single-column-in-r/\n R for Data Science chapter 5: https://r4ds.hadley.nz/data-tidy.html\n"
+#view(pac)
+#glimpse(pac)
 
+```
+
+## 2b - Foreign Connected PACs
+
+```{r}
+#| label: Question 2b Foreign PACs/ Canada
+
+#| label: SETUP
+#SETUP for THEMES 
+  if (!require("pacman"))
+    install.packages("pacman")
+pacman::p_load(here)
+pacman::p_load(tidyverse, colorspace, palmerpenguins, fs, lubridate, scales, openintro, gghighlight, glue, ggridges, dplyr, tidyr)
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+options(width = 65)
+knitr::opts_chunk$set(
+  fig.width = 7,        # 7" width
+  fig.asp = 0.618,      # the golden ratio
+  fig.retina = 3,       # dpi multiplier for displaying HTML output on retina
+  fig.align = "center", # center align figures
+  dpi = 300             # higher dpi, sharper image
+)
+
+# get a list of files with "Foreign Connected PAC" in their names
+list_of_files <- dir_ls(path = "data", regexp = "Foreign Connected PAC")
+# read all files and row bind them
+# keeping track of the file name in a new column called year
+pac <- read_csv(list_of_files, id = "year")
+
+# clean the names and convert character amounts to numeric
+pac %>% 
+   janitor::clean_names()
+pac$Dems = as.numeric(gsub("\\$", "", pac$Dems))
+pac$Repubs = as.numeric(gsub("\\$", "", pac$Repubs))
+
+# Note: another way to format a date into just the year:
+# pac$year = format(pac$year, "%Y")
+
+#Datawrangling
+#This.was.hard
+#split Country/Parent column using '/' as the separator
+pac[c('country', 'parent')] <- str_split_fixed(pac$`Country of Origin/Parent Company`, '/', 2)
+#split year column using '.' as the separator
+pac <-  separate(pac, year, into = c("full", "csv"), sep = "[.]", extra = "drop")
+#split full column using '-' as the separator
+pac[c('first', 'year')] <- str_split_fixed(pac$`full`, '-', 2)
+#convert year to numeric(double)
+pac$year <- as.numeric(as.character(pac$year))
+#pac <- arrange(year) %>% 
+#Rename
+pac <- pac %>% rename_at('PAC Name (Affiliate)', ~'pac_name_affilate')
+#dropping a column
+pac <- subset(pac, select = -c(full, csv, Total, `Country of Origin/Parent Company`, first))
+#Rename partys
+pac <- pac %>% rename_at ('Dems', ~'Party_D')
+pac <- pac %>% rename_at ('Repubs', ~'Party_R')
+
+pac <- pac %>%  filter(country == "Germany")
+# select and order the columns
+pac <- pac %>% select(country, year, Party_D, Party_R) 
+
+#pivot long did not work at first , now it does
+pac <- pac %>% 
+  pivot_longer(cols = starts_with("Party"),
+               names_to = "party",
+               values_to = "amount",
+               values_drop_na = TRUE)
+pac <- pac %>% 
+  group_by(year, party, .drop = TRUE) %>% 
+  summarize(total_contributions = sum(amount))
+
+pac %>% 
+  ggplot(aes(x = year, y = total_contributions, color = party))+
+  geom_line(show.legend = TRUE)+
+  geom_line(linewidth = 1) +
+  theme_classic() +
+  scale_color_manual(values = c("blue", "red"),
+                     labels = c("Democrat", "Republican"))+
+  scale_y_continuous(breaks = seq(from = 0, to = 3000000, by = 500000),
+                     labels = comma_format(big.mark = ","))+
+  #scale_y_discrete (label_dollar ("1M", "2M", "3M"))+
+  labs(
+    y = "Total amount",
+    x = "Year",
+    title = "Contributions to US political parties from German-connected PACs",
+    caption = "OpenSecrets.org")
+
+
+#view(pac)
+#glimpse(pac)
 
 ```
 
 ## 3 - Median housing prices in the US
+
 ```{r}
 #| label: Question 3 Median housing prices
 #SETUP for THEMES 
@@ -199,8 +322,7 @@ housing %>%
     y = "Dollars",
     title = "Median sales price of houses sold in the United States", 
     subtitle = "Not seasonally adjusted",
-#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify,formatting numbers, correcting the x-axis labels (thank you to my colleague @Wes Scott)
-caption = "Sources: Census;HUD\n\nCitations: https://www.statology.org/remove-dollar-sign-in-r/\nhttps://www.statology.org/split-column-in-r/\nhttps://stackoverflow.com/questions/30808474/r-data-wrangling-for-emails\nhttps://www.statology.org/rename-single-column-in-r/\n R for Data Science chapter 5: https://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/\nhttps://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
+    caption = "Sources: Census;HUD"
   )+
     theme(plot.title = element_text(hjust = -1),
           plot.subtitle = element_text(hjust = -0.15))+
@@ -212,9 +334,10 @@ caption = "Sources: Census;HUD\n\nCitations: https://www.statology.org/remove-do
  
 #glimpse(housing)
 #view(housing)
-``` 
+```
 
 ## 3b - Median housing prices in the US: RECESSION LINES
+
 ```{r}
 #| label: Question 3 Median housing prices with recession lines
 #SETUP for THEMES 
@@ -277,12 +400,12 @@ housing %>%
     y = "Dollars",
     title = "Median sales price of houses sold in the United States", 
     subtitle = "Not seasonally adjusted",
-#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify and scale_x_date, also my colleague @Wes Scott, formatting numbers.
-caption = "Shaded areas indicate U.S. recessions \nSources: Census; HUD\n \nhttps://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/\nhttps://stackoverflow.com/questions/78249312/adding-recession-bands-to-ggplot-of-federal-interest-rate-the-taylor-rule-and-y \nhttps://sergiocorreia.github.io/fedplot/reference/geom_recessions.html\nhttps://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/\nhttps://stackoverflow.com/questions/11748384/formatting-dates-on-x-axis-in-ggplot2\nhttps://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
+    caption = "Shaded areas indicate U.S. recessions \nSources: Census; HUD"
   )+
    theme(plot.title = element_text(hjust = -1.2),
           plot.subtitle = element_text(hjust = -0.2))+
-  #geom_recessions(
+ #add recession grey areas to the plot (not working)
+   #geom_recessions(
   #fill = "#BDCFDE",
   #alpha = 1,
   #draw_top_bar = TRUE,
@@ -296,7 +419,7 @@ caption = "Shaded areas indicate U.S. recessions \nSources: Census; HUD\n \nhttp
 
 ```
 
-##3C - Subset of Median Housing 2019 - 2020
+## 3C - Subset of Median Housing 2019 - 2020
 
 ```{r}
 #| label: Question 3C Median housing prices 2019-2020
@@ -355,8 +478,7 @@ housing |>
     y = "Dollars",
     title = "Median sales price of houses sold in the United States", 
     subtitle = "Not seasonally adjusted",
-#citations for label left justify, open circle shape, formatting numbers.
-caption = "\n\nhttps://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/\nhttps://stackoverflow.com/questions/78249312/adding-recession-bands-to-ggplot-of-federal-interest-rate-the-taylor-rule-and-y \nhttps://sergiocorreia.github.io/fedplot/reference/geom_recessions.html\nhttps://r4ds.hadley.nz/data-tidy.html\nhttps://www.statology.org/ggplot-title-position/\nhttps://rstudio.github.io/cheatsheets/html/data-visualization.html\nhttps://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
+    caption = ""
   )+
    theme(plot.title = element_text(hjust = -0.60),
           plot.subtitle = element_text(hjust = -0.10))+
@@ -399,16 +521,15 @@ ggplot(df, aes(x = subject, y = value, fill = subject....c..A....B....C..)) +
   labs(
     x = "",
     y = "",
-    #citation for how to draw layered donut charts
-    caption = "TARGET\n\nhttps://www.geeksf,orgeeks.org/create-multiple-pie-charts-using-ggplot2-in-r/"
+    caption = "TARGET"
   )+
   theme(legend.position = "none")+
     theme(plot.caption = element_text(color = "red", size = 18, face = "bold", hjust = 0))
 
 ```
 
-
 ## 5 - Mirror, mirror on the wall, who’s the ugliest of them all?
+
 ```{r}
 #| label: Ugly penguin graph  (:>)
 #SETUP for THEMES 
@@ -448,4 +569,99 @@ labs(
         plot.subtitle = element_text(color = "purple", size = 10, face = "italics"))
 
 
+```
+
+### Citations:
+
+```{r}
+
+#### Question 1:
+
+#ggridges citations=
+
+#https://wilkelab.org/ggridges/articles/introduction.html
+
+#https://wilkelab.org/ggridges/
+
+#https://stackoverflow.com/questions/11857935/plot-the-average-values-for-each-level
+
+#https://r-graph-gallery.com/267-reorder-a-variable-in-ggplot2.html
+
+#### Question 2:
+
+#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, filtering, summarizing by year and adjusting the labels for the legend=
+
+#https://www.statology.org/remove-dollar-sign-in-r/
+
+#https://www.statology.org/split-column-in-r/
+
+#https://stackoverflow.com/questions/30808474/r-data-wrangling-for-emails
+
+#https://www.statology.org/rename-single-column-in-r/
+
+#R for Data Science chapter 5: <https://r4ds.hadley.nz/data-tidy.html>
+
+#https://tidyr.tidyverse.org/reference/pivot_longer.html
+
+#https://dplyr.tidyverse.org/reference/filter.html
+
+#https://stackoverflow.com/questions/53808561/how-to-add-points-and-lines-in-ggplot-for-sums-by-years")
+
+#https://stackoverflow.com/questions/23635662/editing-legend-text-labels-in-ggplot
+
+#### Question 3a:
+
+#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify,formatting numbers, correcting the x-axis labels (thank you to my colleague @Wes Scott) =
+
+#https://www.statology.org/remove-dollar-sign-in-r/
+
+#https://www.statology.org/split-column-in-r/
+
+#https://stackoverflow.com/questions/30808474/r-data-wrangling-for-emails
+
+#https://www.statology.org/rename-single-column-in-r/
+
+#R for Data Science chapter 5: <https://r4ds.hadley.nz/data-tidy.html>
+
+#https://www.statology.org/ggplot-title-position/
+
+#https://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
+
+#### Question 3b:
+
+#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify and scale_x_date, also my colleague @WesScott, formatting numbers. =
+
+#https://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/
+
+#https://stackoverflow.com/questions/78249312/adding-recession-bands-to-ggplot-of-federal-interest-rate-the-taylor-rule-and-y
+
+#https://sergiocorreia.github.io/fedplot/reference/geom_recessions.html
+
+#https://r4ds.hadley.nz/data-tidy.html
+
+#https://www.statology.org/ggplot-title-position/
+
+#https://stackoverflow.com/questions/11748384/formatting-dates-on-x-axis-in-ggplot2
+
+#https://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
+
+#### Question 3c:
+
+#citations for label left justify, open circle shape, formatting numbers =
+
+#https://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/
+
+#https://stackoverflow.com/questions/78249312/adding-recession-bands-to-ggplot-of-federal-interest-rate-the-taylor-rule-and-y #https://sergiocorreia.github.io/fedplot/reference/geom_recessions.html
+
+#https://r4ds.hadley.nz/data-tidy.html
+
+#https://www.statology.org/ggplot-title-position/
+
+#https://rstudio.github.io/cheatsheets/html/data-visualization.html
+
+#https://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
+
+#### Question 4:
+
+#citation for how to draw layered donut charts = https://www.geeksf,orgeeks.org/create-multiple-pie-charts-using-ggplot2-in-r/
 ```
