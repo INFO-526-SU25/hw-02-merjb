@@ -550,30 +550,32 @@ knitr::opts_chunk$set(
   dpi = 300             # higher dpi, sharper image
 )
 palmerpenguins::penguins
-#glimpse(penguins)
-#view(penguins)
-penguins%>% 
-  drop_na(body_mass_g) %>% 
-ggplot(aes(x = species, y = body_mass_g, color = island, size = body_mass_g))+
-  geom_point()+
-  geom_point(show.legend = FALSE) +
-  geom_line(linewidth = 1,
+
+penguins %>% 
+   janitor::clean_names()
+
+penguins %>% 
+  drop_na(body_mass_g)
+
+penguins %>% 
+  ggplot(aes(x = species, y = body_mass_g, colour = island, size = body_mass_g))+
+  geom_point() +
+  geom_line(linewidth = 2,
             color = "green") +
   theme_dark() +
-  scale_color_manual(values = c("purple","red","yellow"))+ 
-labs(
-  title = "UGLIEST OF THEM ALL",
-  subtitle = "Worst plot colors ever"
-)+
+  scale_color_manual(values = c("purple", "red", "yellow")) +
+  labs(
+    title = "Ugliest of them All",
+    subtitle = "Worst plot colors ever",
+    caption = "Source: Palmerpenguins, Tidytuesday"
+  ) +
   theme(plot.title = element_text(color = "red", size = 18, face = "bold", hjust = 0),
-        plot.subtitle = element_text(color = "purple", size = 10, face = "italics"))
+        plot.subtitle = element_text(color = "purple", size = 10, face = "bold"))
 
 
 ```
 
 ### Citations:
-
-```{r}
 
 #### Question 1:
 
@@ -662,6 +664,4 @@ labs(
 #https://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
 
 #### Question 4:
-
-#citation for how to draw layered donut charts = https://www.geeksf,orgeeks.org/create-multiple-pie-charts-using-ggplot2-in-r/
-```
+#citation for how to draw layered donut charts = #https://www.geeksf,orgeeks.org/create-multiple-pie-charts-using-ggplot2-in-r/
