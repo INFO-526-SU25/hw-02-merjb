@@ -551,10 +551,8 @@ palmerpenguins::penguins
 
 penguins %>% 
    janitor::clean_names() %>% 
-  drop_na(body_mass_g)
- 
-penguins%>% 
-  ggplot(aes(x = species, y = body_mass_g, colour = island, size = body_mass_g))+
+  drop_na(island, body_mass_g) %>% 
+  ggplot(aes(x = species, y = body_mass_g, colour = island, size = body_mass_g, na.rm = TRUE)) +
   geom_point() +
   geom_line(linewidth = 2,
             color = "green") +
