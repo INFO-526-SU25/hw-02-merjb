@@ -1,14 +1,11 @@
 ---
 title: "HW 02"
 author: "Meredith Jean-Baptiste"
-date: 2025-05-30
+date: "2025-06-13"
 format: 
-    html:
-    embed-resources: true
-execute: 
-warning: false
-message: false
-error: false
+  html:
+   embed-resources: true
+toc: true
 ---
 
 ## 1 - A new day, a new plot, a new geom
@@ -39,7 +36,7 @@ library(dsbox)
 my_edibnb_data <- edibnb
 
 #make a ridge plot of AirBnB review scores of Edinburgh neighborhoods, ordered by their median review scores
-#stat_summary() function to summarize your data. To order the data by mean, you can use the fct_reorder() function from the forcats package to reorder the factor levels based on the calculated means.
+#stat_summary() function to summarize your data. To order the data by mean, you can use the fct_reorder() function from the forcats package to reorder the factor levels based on the calculated means. Note: this did not work for me for some reason
 #edibnb %>% 
 #  group_by(neighbourhood) %>%
 #  summarize(mean_score = mean(review_scores_rating), .groups = "drop") %>% 
@@ -156,7 +153,7 @@ pac %>%
                      labels = comma_format(big.mark = ","))+
   #scale_y_discrete (label_dollar ("1M", "2M", "3M"))+
   labs(
-    y = "Total amount",
+    y = "Total amount (USD)",
     x = "Year",
     title = "Contributions to US political parties from UK-connected PACs",
     caption = "OpenSecrets.org")
@@ -247,7 +244,7 @@ pac %>%
                      labels = comma_format(big.mark = ","))+
   #scale_y_discrete (label_dollar ("1M", "2M", "3M"))+
   labs(
-    y = "Total amount",
+    y = "Total amount (USD)",
     x = "Year",
     title = "Contributions to US political parties from German-connected PACs",
     caption = "OpenSecrets.org")
@@ -324,8 +321,9 @@ housing %>%
     subtitle = "Not seasonally adjusted",
     caption = "Sources: Census;HUD"
   )+
-    theme(plot.title = element_text(hjust = -1),
-          plot.subtitle = element_text(hjust = -0.15))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0),
+          plot.subtitle = element_text(hjust = 0))+
 #scale_x_date(date_labels = year)+
 
 # Hide the lyear# Hide the legend
@@ -524,7 +522,7 @@ ggplot(df, aes(x = subject, y = value, fill = subject....c..A....B....C..)) +
     caption = "TARGET"
   )+
   theme(legend.position = "none")+
-    theme(plot.caption = element_text(color = "red", size = 18, face = "bold", hjust = 0))
+    theme(plot.caption = element_text(color = "red", size = 36, face = "bold", hjust = 0.5))
 
 ```
 
@@ -552,12 +550,10 @@ knitr::opts_chunk$set(
 palmerpenguins::penguins
 
 penguins %>% 
-   janitor::clean_names()
-
-penguins %>% 
+   janitor::clean_names() %>% 
   drop_na(body_mass_g)
-
-penguins %>% 
+ 
+penguins%>% 
   ggplot(aes(x = species, y = body_mass_g, colour = island, size = body_mass_g))+
   geom_point() +
   geom_line(linewidth = 2,
@@ -575,9 +571,9 @@ penguins %>%
 
 ```
 
-### Citations:
+### **Sources**
 
-#### Question 1:
+#### **Question 1**
 
 #ggridges citations=
 
@@ -589,7 +585,7 @@ penguins %>%
 
 #https://r-graph-gallery.com/267-reorder-a-variable-in-ggplot2.html
 
-#### Question 2:
+#### **Question 2**
 
 #citations for how to remove the dollar sign, how to split columns into two, how to pivot long, filtering, summarizing by year and adjusting the labels for the legend=
 
@@ -611,9 +607,9 @@ penguins %>%
 
 #https://stackoverflow.com/questions/23635662/editing-legend-text-labels-in-ggplot
 
-#### Question 3a:
+#### **Question 3a**
 
-#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify,formatting numbers, correcting the x-axis labels (thank you to my colleague @Wes Scott) =
+#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify,formatting numbers, correcting the x-axis labels (thank you to my colleague \@Wes Scott) =
 
 #https://www.statology.org/remove-dollar-sign-in-r/
 
@@ -629,9 +625,9 @@ penguins %>%
 
 #https://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
 
-#### Question 3b:
+#### **Question 3b**
 
-#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify and scale_x_date, also my colleague @WesScott, formatting numbers. =
+#citations for how to remove the dollar sign, how to split columns into two, how to pivot long, label left justify and scale_x_date, also my colleague \@WesScott, formatting numbers. =
 
 #https://www.r-bloggers.com/2011/08/use-geom_rect-to-add-recession-bars-to-your-time-series-plots-rstats-ggplot/
 
@@ -647,7 +643,7 @@ penguins %>%
 
 #https://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
 
-#### Question 3c:
+#### **Question 3c**
 
 #citations for label left justify, open circle shape, formatting numbers =
 
@@ -663,5 +659,6 @@ penguins %>%
 
 #https://www.geeksforgeeks.org/change-formatting-of-numbers-of-ggplot2-plot-axis-in-r/"
 
-#### Question 4:
+#### **Question 4**
+
 #citation for how to draw layered donut charts = #https://www.geeksf,orgeeks.org/create-multiple-pie-charts-using-ggplot2-in-r/
