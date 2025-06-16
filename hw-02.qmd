@@ -36,12 +36,17 @@ library(dsbox)
 my_edibnb_data <- edibnb
 
 #make a ridge plot of AirBnB review scores of Edinburgh neighborhoods, ordered by their median review scores
-#stat_summary() function to summarize your data. To order the data by mean, you can use the fct_reorder() function from the forcats package to reorder the factor levels based on the calculated means. Note: this did not work for me for some reason
+#stat_summary() function to summarize your data. To order the data by mean, you can use the fct_reorder() function from the forcats package to reorder the factor levels based on the calculated means. 
+#Note: this did not work for me for some reason
 #edibnb %>% 
 #  group_by(neighbourhood) %>%
 #  summarize(mean_score = mean(review_scores_rating), .groups = "drop") %>% 
 #  mutate(neighbourhood = fct_reorder(neighbourhood, mean_score)) %>% 
 #  geom_density_ridges(review_scores_rating ~ fct_reorder(neighbourhood, review_scores_rating))+
+
+#I also tried this and did not have any luck with finding the medians
+#df1 <- edibnb %>%  group_by(neighbourhood) %>% mutate(med = median(review_scores_rating))
+
 edibnb %>% 
 ggplot(aes(x = review_scores_rating, y = neighbourhood))+
   geom_density_ridges()+
@@ -53,8 +58,7 @@ ggplot(aes(x = review_scores_rating, y = neighbourhood))+
     caption = "Source: TidyTuesday"
   )
 
-#view(edibnb)
-#glimpse(edibnb)
+#This geom density ridges plot shows the Air BnB review scores ratings by Edinburgh neighbourhoods. It appears the median review scores are quite high across all neighbourhoods. Unfortunately I had difficulty showing the medians in this graph so all scores are showing for all neighbourhoods. We can visualize the medians are slightly lower for Tollcross, Olde Town and Haymarket however the remainder of the neighbourhoods all have very good scores. There is NA which did not specify a neighbourhood and we can see that even when a neighbourhood was not specified, the review scores remain high.
 
 ```
 
@@ -250,8 +254,7 @@ pac %>%
     caption = "OpenSecrets.org")
 
 
-#view(pac)
-#glimpse(pac)
+#Interpretation: As we saw in the contributions to US political parties from UK-connected PACs, the German-connected PACs were similar in that the majority of the contributions were to the Republican party, with the amounts steadily increasing over time with higher amounts noted between 2012 and 2017. We also see that the peak was around 2 million USD as compared to over 3 million USD for the UK-connected PACs.
 
 ```
 
@@ -563,8 +566,8 @@ penguins %>%
     subtitle = "Worst plot colors ever",
     caption = "Source: Palmerpenguins, Tidytuesday"
   ) +
-  theme(plot.title = element_text(color = "red", size = 18, face = "bold", hjust = 0),
-        plot.subtitle = element_text(color = "purple", size = 10, face = "bold"))
+  theme(plot.title = element_text(color = "red", face = "bold", hjust = 0),
+        plot.subtitle = element_text(color = "purple", face = "bold"))
 
 
 ```
